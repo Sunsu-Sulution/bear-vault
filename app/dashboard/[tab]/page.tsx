@@ -670,7 +670,7 @@ export default function Page() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [configs, connections.length]);
 
-  useEffect(() => {
+  const refreshChartsForTabInputs = React.useCallback(async () => {
     if (!configs?.length || !connections?.length) return;
     if (!tabInputsLoaded) return;
     const pending: Array<Promise<void>> = [];
@@ -711,18 +711,21 @@ export default function Page() {
       }
     }
     if (pending.length) {
-      void Promise.allSettled(pending);
+      await Promise.allSettled(pending);
     }
   }, [
     configs,
     connections.length,
-    tabInputSignature,
     tabInputsLoaded,
     configUsesTabInputs,
     resolveFiltersWithInputs,
     fetchRows,
     fetchSQLRows,
   ]);
+
+  useEffect(() => {
+    void refreshChartsForTabInputs();
+  }, [tabInputSignature, refreshChartsForTabInputs]);
 
   return (
     <div className="p-5 space-y-4 relative" data-content-container>
@@ -769,6 +772,7 @@ export default function Page() {
           isLocked={isLocked}
           isLoaded={tabInputsLoaded}
           allowValueEditingWhenLocked
+          onRefreshInputs={refreshChartsForTabInputs}
           onAddInput={() => {
             addTabInput();
           }}

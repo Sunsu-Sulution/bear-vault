@@ -17,6 +17,7 @@ import {
   Keyboard,
   MoreHorizontal,
   Plus,
+  Search,
   Trash2,
 } from "lucide-react";
 
@@ -71,6 +72,7 @@ interface TabInputsPanelProps {
   onSetValue: (id: string, value: string) => void;
   onReorderInput?: (fromIndex: number, toIndex: number) => void;
   allowValueEditingWhenLocked?: boolean;
+  onRefreshInputs?: () => Promise<void> | void;
 }
 
 export function TabInputsPanel({
@@ -82,6 +84,7 @@ export function TabInputsPanel({
   onRemoveInput,
   onSetValue,
   allowValueEditingWhenLocked = false,
+  onRefreshInputs,
 }: TabInputsPanelProps) {
   const canEditStructure = !isLocked;
   const handleTypeSelect = (inputId: string, type: TabInputType) => {
@@ -92,6 +95,19 @@ export function TabInputsPanel({
     onAddInput();
   };
 
+  const [isRefreshing, setIsRefreshing] = React.useState(false);
+  const handleRefreshInputs = React.useCallback(async () => {
+    if (!onRefreshInputs) return;
+    try {
+      setIsRefreshing(true);
+      await onRefreshInputs();
+    } catch (error) {
+      console.error("Failed to refresh tab inputs data:", error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [onRefreshInputs]);
+
   const canEditValue = !isLocked || allowValueEditingWhenLocked;
   const itemWrapperClass = isLocked
     ? "flex flex-col gap-4 rounded-lg border border-border/60 p-4 md:flex-row md:items-start"
@@ -101,14 +117,31 @@ export function TabInputsPanel({
     <Card className="bg-background/70 border-dashed">
       {!isLocked && (
         <CardHeader className="pb-2">
-          <div className="flex items-center justify-between gap-4">
-            <Button variant="outline" size="sm" onClick={handleAddInput}>
-              <Plus className="mr-2 h-4 w-4" />
-              เพิ่มตัวแปร
-            </Button>
+          <div className="flex items-center justify-between gap-3">
             <CardTitle className="text-base font-semibold text-foreground">
               ตัวแปรสำหรับแท็บนี้
             </CardTitle>
+            <div className="flex items-center gap-2">
+              {onRefreshInputs && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9"
+                  onClick={handleRefreshInputs}
+                  disabled={isRefreshing}
+                  title="รีเฟรชข้อมูลตัวแปร"
+                >
+                  <Search
+                    className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
+                  />
+                </Button>
+              )}
+              <Button variant="outline" size="sm" onClick={handleAddInput}>
+                <Plus className="mr-2 h-4 w-4" />
+                เพิ่มตัวแปร
+              </Button>
+            </div>
           </div>
         </CardHeader>
       )}
