@@ -123,6 +123,24 @@ export default function Page() {
                     ลบ
                   </Button>
                 </div>
+                <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                  <label className="inline-flex items-center gap-2 font-medium text-foreground">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 rounded border border-input text-primary focus:ring-2 focus:ring-primary/50"
+                      checked={c.aiReadable !== false}
+                      onChange={(event) =>
+                        updateConnection(c.id, { aiReadable: event.target.checked })
+                      }
+                    />
+                    อนุญาตให้ AI ใช้งาน
+                  </label>
+                  <span>
+                    {c.aiReadable === false
+                      ? "AI จะไม่ใช้ connection นี้"
+                      : "AI สามารถอ่านข้อมูลจาก connection นี้"}
+                  </span>
+                </div>
                 {status && (
                   <div
                     className={`flex items-center gap-2 text-sm ${

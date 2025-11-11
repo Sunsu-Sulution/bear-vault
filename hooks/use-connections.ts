@@ -13,6 +13,8 @@ export type DbConnection = {
   user: string;
   password: string;
   database: string;
+  schema?: string;
+  aiReadable?: boolean;
 };
 
 type State = {
@@ -31,7 +33,11 @@ export function useConnections() {
         const response = await fetch("/api/user-configs/connections");
         if (response.ok) {
           const data = (await response.json()) as State;
-          setConnections(data.connections ?? []);
+          const normalized = (data.connections ?? []).map((conn) => ({
+            aiReadable: conn.aiReadable ?? true,
+            ...conn,
+          }));
+          setConnections(normalized);
           setActiveId(data.activeId);
       }
       } catch (error) {
@@ -67,7 +73,11 @@ export function useConnections() {
 
   const addConnection = (conn: Omit<DbConnection, "id">) => {
     const id = `conn_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
-    const full: DbConnection = { id, ...conn };
+    const full: DbConnection = {
+      id,
+      aiReadable: true,
+      ...conn,
+    };
     const next = [...connections, full];
     setConnections(next);
     if (!activeId) setActiveId(id);

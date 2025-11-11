@@ -20,6 +20,7 @@ import {
   Check,
   AlertTriangle,
 } from "lucide-react";
+import { useConnections } from "@/hooks/use-connections";
 
 type GeminiChartSuggestion = {
   type: ChartType;
@@ -281,6 +282,7 @@ export function AiChartDialog({
   pagePath,
   onFetchSQLRows,
 }: AiChartDialogProps) {
+  const { connections } = useConnections();
   const [question, setQuestion] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [isAppending, setIsAppending] = useState(false);
@@ -289,6 +291,19 @@ export function AiChartDialog({
   const [preview, setPreview] = useState<PreviewState | null>(null);
   const [selectedType, setSelectedType] =
     useState<SelectableChartType>("table");
+  const [selectedConnectionId, setSelectedConnectionId] = useState<
+    string | undefined
+  >(undefined);
+
+  const aiConnections = useMemo(
+    () => connections.filter((conn) => conn.aiReadable !== false),
+    [connections],
+  );
+
+  const selectedConnection = useMemo(
+    () => aiConnections.find((conn) => conn.id === selectedConnectionId),
+    [aiConnections, selectedConnectionId],
+  );
 
   useEffect(() => {
     if (!open) {
@@ -299,8 +314,23 @@ export function AiChartDialog({
       setGeminiResult(null);
       setPreview(null);
       setSelectedType("table");
+      setSelectedConnectionId(undefined);
     }
   }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    if (aiConnections.length === 0) {
+      setSelectedConnectionId(undefined);
+      return;
+    }
+    setSelectedConnectionId((current) => {
+      if (current && aiConnections.some((conn) => conn.id === current)) {
+        return current;
+      }
+      return aiConnections[0]?.id;
+    });
+  }, [open, aiConnections]);
 
   const visibleConfigs = useMemo(() => {
     if (!preview) return [];
@@ -314,6 +344,10 @@ export function AiChartDialog({
   const handleGenerate = async () => {
     if (!question.trim()) {
       setError("กรุณาพิมพ์สิ่งที่ต้องการให้ AI สร้างกราฟ");
+      return;
+    }
+    if (!selectedConnectionId) {
+      setError("กรุณาเลือก Database Connection ที่อนุญาตให้ AI ใช้งาน");
       return;
     }
     try {
@@ -330,6 +364,7 @@ export function AiChartDialog({
         body: JSON.stringify({
           question: question.trim(),
           chartType: selectedType,
+          connectionId: selectedConnectionId,
         }),
       });
 
@@ -340,6 +375,9 @@ export function AiChartDialog({
 
       const data = (await response.json()) as GeminiResponse;
       setGeminiResult(data);
+      if (data.connectionId) {
+        setSelectedConnectionId(data.connectionId);
+      }
 
       const rows =
         (await onFetchSQLRows(
@@ -438,6 +476,8 @@ export function AiChartDialog({
     'เช่น "สรุปยอดขายรายวัน แสดง Top 5 สาขา" หรือ "ดูเทรนด์ยอดซื้อรายเดือน"';
 
   const canAppend = Boolean(visibleConfigs.length) && !isGenerating;
+  const canGenerate =
+    Boolean(selectedConnectionId) && !isGenerating && !isAppending;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -455,6 +495,48 @@ export function AiChartDialog({
             <label className="text-sm font-semibold text-foreground">
               สิ่งที่อยากให้ AI ช่วยสร้าง
             </label>
+            <div className="space-y-2">
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                Database Connection
+              </span>
+              {aiConnections.length > 0 ? (
+                <div className="grid gap-2 sm:grid-cols-[minmax(0,300px)_1fr] sm:items-center">
+                  <select
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    value={selectedConnectionId ?? ""}
+                    onChange={(event) =>
+                      setSelectedConnectionId(event.target.value)
+                    }
+                    disabled={isGenerating || isAppending}
+                  >
+                    {aiConnections.map((conn) => (
+                      <option key={conn.id} value={conn.id}>
+                        {conn.name || conn.database || conn.host} (
+                        {conn.type === "postgresql" ? "PostgreSQL" : "MySQL"})
+                      </option>
+                    ))}
+                  </select>
+                  {selectedConnection && (
+                    <div className="rounded-md border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                      <div className="font-semibold text-foreground">
+                        {selectedConnection.name || "Unnamed connection"}
+                      </div>
+                      <div>
+                        Host: {selectedConnection.host}:{selectedConnection.port}
+                      </div>
+                      {selectedConnection.database && (
+                        <div>Database: {selectedConnection.database}</div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="rounded-md border border-dashed border-amber-400 bg-amber-50/60 px-3 py-2 text-xs text-amber-700">
+                  ยังไม่มี connection ที่อนุญาตให้ AI ใช้งาน กรุณาเปิดสิทธิ์ในหน้า
+                  Database Connections ก่อน
+                </div>
+              )}
+            </div>
             <div className="flex flex-wrap items-center gap-2">
               {CHART_TYPE_OPTIONS.map((option) => {
                 const isActive = selectedType === option.type;
@@ -490,7 +572,7 @@ export function AiChartDialog({
             <div className="flex flex-wrap items-center gap-3">
               <Button
                 onClick={handleGenerate}
-                disabled={isGenerating || isAppending}
+                disabled={!canGenerate}
                 className="inline-flex items-center gap-2"
               >
                 {isGenerating ? (
