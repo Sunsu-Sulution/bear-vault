@@ -10,14 +10,14 @@ export function resolveIcon(
   defaultIcon: Icon,
 ): Icon {
   if (!iconName) return defaultIcon;
-  
+
   // Try to get icon from @tabler/icons-react
-  const IconComponent = (TablerIcons as Record<string, Icon | undefined>)[iconName];
-  
+  const IconComponent = (TablerIcons as unknown as Record<string, Icon | undefined>)[iconName];
+
   if (IconComponent && typeof IconComponent === "function") {
     return IconComponent;
   }
-  
+
   return defaultIcon;
 }
 
