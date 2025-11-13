@@ -34,6 +34,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     addTab, 
     removeTab, 
     renameTab, 
+    updateTab,
     reorderTabs, 
     duplicateTab,
     moveTabToGroup,
@@ -84,6 +85,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const handleRenameTab = (id: string, name: string) => {
     if (isLocked) return;
     renameTab(id, name);
+  };
+
+  const handleUpdateTab = (id: string, updates: Partial<import("@/types/dashboard").DashboardTab>) => {
+    if (isLocked) return;
+    updateTab(id, updates);
   };
 
   const handleExportAll = async () => {
@@ -198,6 +204,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             onDelete={handleDeleteTab}
             onRename={handleRenameTab}
             onDuplicate={handleDuplicateTab}
+            onUpdateTab={handleUpdateTab}
             onReorder={reorderTabs}
             onMoveTabToGroup={moveTabToGroup}
             onAddGroup={addGroup}

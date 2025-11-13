@@ -145,6 +145,47 @@ export function useDashboardTabs(options?: UseDashboardTabsOptions) {
     }
   };
 
+  const updateTab = (id: string, updates: Partial<DashboardTab>) => {
+    const oldTab = tabs.find((t) => t.id === id);
+    if (!oldTab) return;
+    
+    const updatedTab = { ...oldTab, ...updates };
+    save(tabs.map((t) => (t.id === id ? updatedTab : t)), groups);
+    
+    // Record change
+    if (options?.userId) {
+      const changes: Array<{ field: string; oldValue: unknown; newValue: unknown }> = [];
+      if (updates.link !== undefined && updates.link !== oldTab.link) {
+        changes.push({
+          field: "link",
+          oldValue: oldTab.link,
+          newValue: updates.link,
+        });
+      }
+      if (updates.icon !== undefined && updates.icon !== oldTab.icon) {
+        changes.push({
+          field: "icon",
+          oldValue: oldTab.icon,
+          newValue: updates.icon,
+        });
+      }
+      
+      if (changes.length > 0) {
+        recordChange({
+          tabId: id,
+          userId: options.userId,
+          userName: options.userName || options.userId,
+          userEmail: options.userEmail || "",
+          action: "update",
+          entityType: "tab",
+          entityId: id,
+          entityName: oldTab.name,
+          changes,
+        });
+      }
+    }
+  };
+
   const reorderTabs = (fromIndex: number, toIndex: number, groupId?: string) => {
     // Filter tabs by group
     const groupTabs = groupId 
@@ -293,6 +334,7 @@ export function useDashboardTabs(options?: UseDashboardTabsOptions) {
     addTab, 
     removeTab, 
     renameTab, 
+    updateTab,
     reorderTabs, 
     duplicateTab, 
     reloadTabs: loadTabs,

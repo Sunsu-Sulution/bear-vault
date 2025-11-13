@@ -8,6 +8,7 @@ import {
   IconFolder,
   IconChevronDown,
   IconChevronRight,
+  IconLink,
 } from "@tabler/icons-react";
 import { useState } from "react";
 import {
@@ -21,6 +22,9 @@ import { useHelperContext } from "./providers/helper-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DashboardTab, TabGroup } from "@/types/dashboard";
+import { resolveIcon } from "@/lib/icon-resolver";
+import { TabEditDialog } from "@/components/tab-edit-dialog";
+import { IconSettings } from "@tabler/icons-react";
 
 interface NavDocumentsWithGroupsProps {
   tabs: DashboardTab[];
@@ -29,6 +33,7 @@ interface NavDocumentsWithGroupsProps {
   onDelete?: (id: string, url: string) => void;
   onRename?: (id: string, name: string) => void;
   onDuplicate?: (id: string) => void;
+  onUpdateTab?: (id: string, updates: Partial<DashboardTab>) => void;
   onReorder?: (fromIndex: number, toIndex: number, groupId?: string) => void;
   onMoveTabToGroup?: (tabId: string, targetGroupId: string | null) => void;
   onAddGroup?: (name: string) => void;
@@ -44,6 +49,7 @@ export function NavDocumentsWithGroups({
   onDelete,
   onRename,
   onDuplicate,
+  onUpdateTab,
   onReorder,
   onMoveTabToGroup,
   onAddGroup,
@@ -61,6 +67,7 @@ export function NavDocumentsWithGroups({
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(
     new Set(),
   );
+  const [editingTabId, setEditingTabId] = useState<string | null>(null);
 
   // Sort groups by order
   const sortedGroups = [...groups].sort((a, b) => a.order - b.order);
@@ -141,7 +148,9 @@ export function NavDocumentsWithGroups({
   ) => {
     const isEditing = editingId === tab.id;
     const isDragging = draggedTabId === tab.id;
-    const url = `/dashboard/${tab.id}`;
+    const url = tab.link || `/dashboard/${tab.id}`;
+    const isLink = !!tab.link;
+    const TabIconComponent = resolveIcon(tab.icon, TabIcon);
 
     return (
       <SidebarMenuItem key={tab.id}>
@@ -207,11 +216,15 @@ export function NavDocumentsWithGroups({
               className="flex items-center gap-2 flex-1 cursor-pointer min-w-0"
               onClick={() => {
                 if (!isEditing) {
-                  router.push(url);
+                  if (isLink) {
+                    window.open(url, "_blank", "noopener,noreferrer");
+                  } else {
+                    router.push(url);
+                  }
                 }
               }}
             >
-              <TabIcon className="shrink-0" />
+              <TabIconComponent className="shrink-0" />
               {isEditing ? (
                 <Input
                   value={editName}
@@ -228,14 +241,33 @@ export function NavDocumentsWithGroups({
                   autoFocus
                 />
               ) : (
-                <span className="truncate">{tab.name}</span>
+                <>
+                  <span className="truncate">{tab.name}</span>
+                  {isLink && (
+                    <IconLink className="h-3 w-3 shrink-0 text-muted-foreground" />
+                  )}
+                </>
               )}
             </div>
             {!isEditing &&
-              (onDelete || onRename || onDuplicate) &&
+              (onDelete || onRename || onDuplicate || onUpdateTab) &&
               tab.id &&
               !isLocked && (
                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-40 transition-opacity">
+                  {onUpdateTab && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 p-0 cursor-pointer"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditingTabId(tab.id);
+                      }}
+                      title="แก้ไข Link และ Icon"
+                    >
+                      <IconSettings className="h-3 w-3" />
+                    </Button>
+                  )}
                   {onDuplicate && (
                     <Button
                       variant="ghost"
@@ -312,8 +344,24 @@ export function NavDocumentsWithGroups({
     );
   };
 
+  const editingTab = tabs.find((t) => t.id === editingTabId);
+
+  const handleUpdateTab = (updates: Partial<DashboardTab>) => {
+    if (editingTabId && onUpdateTab) {
+      onUpdateTab(editingTabId, updates);
+    }
+  };
+
   return (
     <>
+      <TabEditDialog
+        open={!!editingTabId}
+        onOpenChange={(open) => {
+          if (!open) setEditingTabId(null);
+        }}
+        tab={editingTab || null}
+        onSave={handleUpdateTab}
+      />
       {/* Groups */}
       {sortedGroups.map((group, groupIndex) => {
         const groupTabs = tabsByGroup[group.id] || [];

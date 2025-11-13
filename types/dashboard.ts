@@ -10,6 +10,8 @@ export type DashboardTab = {
   createdAt: string;
   isPublic?: boolean; // Whether this tab can be accessed via public link
   groupId?: string; // ID of the group this tab belongs to. If undefined, tab is in "Uncategorized"
+  link?: string; // External link URL - if set, clicking tab opens this link in new tab
+  icon?: string; // Icon name from @tabler/icons-react (e.g., "IconHome", "IconDatabase")
 };
 
 export type DashboardTabsState = {
