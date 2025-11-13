@@ -110,7 +110,7 @@ export function TabInputsPanel({
 
   const canEditValue = !isLocked || allowValueEditingWhenLocked;
   const itemWrapperClass = isLocked
-    ? "flex flex-col gap-4 rounded-lg border border-border/60 p-4 md:flex-row md:items-start"
+    ? "grid gap-2 rounded-lg border border-border/60 bg-background/80 p-3 md:grid-cols-[200px,1fr] md:items-center"
     : "grid gap-2 rounded-lg border border-border/60 bg-card/60 p-3 md:grid-cols-[220px,1fr] md:items-center";
 
   return (
@@ -163,7 +163,7 @@ export function TabInputsPanel({
               <div
                 className={
                   isLocked
-                    ? "flex w-full flex-col gap-3 md:w-64"
+                    ? "flex flex-col gap-1 md:col-span-1 md:flex-row md:items-center md:gap-2"
                     : "flex flex-col gap-2 md:col-span-1"
                 }
               >
@@ -222,7 +222,7 @@ export function TabInputsPanel({
               <div
                 className={
                   isLocked
-                    ? "flex w-full flex-1 flex-col gap-3"
+                    ? "flex w-full flex-col gap-3 md:col-span-1"
                     : "flex w-full flex-col gap-3 md:col-span-1"
                 }
               >
@@ -239,7 +239,7 @@ export function TabInputsPanel({
                         <span>{typeLabels[input.type]}</span>
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start" className="z-[500]">
+                    <DropdownMenuContent align="start" className="z-500">
                       {(["text", "number", "date"] as TabInputType[]).map(
                         (type) => (
                           <DropdownMenuItem
@@ -273,7 +273,7 @@ export function TabInputsPanel({
                       input,
                       isLocked,
                       canEditValue,
-                      isLocked ? undefined : "h-9 text-sm",
+                      "h-9 text-sm",
                       (value) => onSetValue(input.id, value),
                     )}
                     {(input.defaultValue || input.placeholder) && (
@@ -300,7 +300,7 @@ export function TabInputsPanel({
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="z-[500]">
+                      <DropdownMenuContent align="end" className="z-500">
                         <DropdownMenuItem
                           className="text-destructive focus:text-destructive"
                           onSelect={(event) => {
