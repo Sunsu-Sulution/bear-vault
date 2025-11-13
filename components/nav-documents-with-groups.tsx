@@ -151,6 +151,11 @@ export function NavDocumentsWithGroups({
     const url = tab.link || `/dashboard/${tab.id}`;
     const isLink = !!tab.link;
     const TabIconComponent = resolveIcon(tab.icon, TabIcon);
+    
+    // Debug: log icon resolution
+    if (process.env.NODE_ENV === "development" && tab.icon) {
+      console.log(`Tab "${tab.name}" icon:`, tab.icon, "Resolved to:", TabIconComponent);
+    }
 
     return (
       <SidebarMenuItem key={tab.id}>

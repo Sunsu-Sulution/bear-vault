@@ -95,10 +95,14 @@ export function TabEditDialog({
       setSelectedIcon("");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, tab?.id]);
+  }, [open, tab?.id, tab?.link, tab?.icon]);
 
   const handleSave = () => {
     if (!tab) return;
+    // Debug: log icon name being saved
+    if (process.env.NODE_ENV === "development") {
+      console.log("Saving icon:", selectedIcon);
+    }
     onSave({
       link: link.trim() || undefined,
       icon: selectedIcon || undefined,
@@ -219,7 +223,17 @@ export function TabEditDialog({
                     <button
                       key={iconData.name}
                       type="button"
-                      onClick={() => setSelectedIcon(iconData.name)}
+                      onClick={() => {
+                        if (process.env.NODE_ENV === "development") {
+                          console.log(
+                            "Selecting icon:",
+                            iconData.name,
+                            "Component:",
+                            IconComp,
+                          );
+                        }
+                        setSelectedIcon(iconData.name);
+                      }}
                       className={cn(
                         "flex flex-col items-center justify-center gap-1.5 rounded-lg border-2 p-3 transition-all hover:scale-105 hover:border-primary/50 hover:bg-accent hover:shadow-sm",
                         isSelected
