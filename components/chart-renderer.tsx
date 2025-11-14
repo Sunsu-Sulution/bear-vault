@@ -682,20 +682,14 @@ export function ChartRenderer({
     return base.map((d) => {
       const field = (d.field as string) || "";
       const ft = fieldTypes[field];
-      const baseDef: ColDef = {
-        ...d,
-        valueGetter: (params) => {
-          if (!params.data) return undefined;
-          const data = params.data as Record<string, unknown>;
-          return data[field] ?? undefined;
-        },
-      };
+
       if (ft === "number") {
         return {
-          ...baseDef,
+          ...d,
+          field: field,
           filter: "agNumberColumnFilter",
           valueGetter: (params) => {
-            if (!params.data) return undefined;
+            if (!params.data) return null;
             const data = params.data as Record<string, unknown>;
             const value = data[field];
             if (value == null || value === "") return null;
@@ -717,13 +711,20 @@ export function ChartRenderer({
             if (Number.isNaN(numB)) return -1;
             return numA - numB;
           },
-          minWidth: baseDef.minWidth || 150,
+          minWidth: d.minWidth || 150,
         } as ColDef;
       }
+
       if (ft === "date") {
         return {
-          ...baseDef,
+          ...d,
+          field: field,
           filter: "agTextColumnFilter",
+          valueGetter: (params) => {
+            if (!params.data) return null;
+            const data = params.data as Record<string, unknown>;
+            return data[field] ?? null;
+          },
           valueFormatter: (p: { value: unknown }) => {
             if (p.value == null || p.value === "") return "";
             const time = Date.parse(String(p.value));
@@ -734,13 +735,20 @@ export function ChartRenderer({
             const year = dt.getFullYear();
             return `${year}-${month}-${day}`;
           },
-          minWidth: baseDef.minWidth || 180,
+          minWidth: d.minWidth || 180,
         } as ColDef;
       }
+
+      // String or unknown type - use field directly, let AG Grid auto-detect
       return {
-        ...baseDef,
+        ...d,
+        field: field,
         filter: "agTextColumnFilter",
-        minWidth: baseDef.minWidth || 120,
+        valueFormatter: (p: { value: unknown }) => {
+          if (p.value == null || p.value === "") return "";
+          return String(p.value);
+        },
+        minWidth: d.minWidth || 120,
       } as ColDef;
     });
   }, [config.columnDefs, config.columns, fieldTypes, filteredData]);
