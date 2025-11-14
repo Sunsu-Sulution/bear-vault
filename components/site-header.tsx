@@ -20,6 +20,7 @@ import {
   Eye,
   EyeOff,
   RefreshCw,
+  Sparkles,
 } from "lucide-react";
 import { useHelperContext } from "./providers/helper-provider";
 import { useParams, useRouter } from "next/navigation";
@@ -29,6 +30,7 @@ import { useDashboardTabs } from "@/hooks/use-dashboard-tabs";
 import { useNotes } from "@/hooks/use-notes";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useState, useMemo, useEffect } from "react";
+import { ChatPanel } from "@/components/chat-panel";
 
 export function SiteHeader() {
   const {
@@ -51,6 +53,7 @@ export function SiteHeader() {
   const [isPublicState, setIsPublicState] = useState(isPublic);
   const [toastOpen, setToastOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
   const isMobile = useIsMobile();
 
   const { addNote } = useNotes({ tabId });
@@ -363,9 +366,24 @@ export function SiteHeader() {
                 <Unlock className="h-4 w-4" />
               )}
             </Button>
+            <Button
+              variant="default"
+              size={isMobile ? "icon" : "sm"}
+              onClick={() => setIsChatOpen(!isChatOpen)}
+              className={isMobile ? "" : "gap-2"}
+              title="Ask AI"
+            >
+              <Sparkles className="h-4 w-4" />
+              {!isMobile && <span>Ask AI</span>}
+            </Button>
           </div>
       </div>
     </header>
+      <ChatPanel
+        open={isChatOpen}
+        onClose={() => setIsChatOpen(false)}
+        tabId={tabId}
+      />
       <Toast
         message="คัดลอกลิงก์แล้ว"
         open={toastOpen}

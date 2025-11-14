@@ -4,7 +4,6 @@ import { SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { SiteHeader } from "@/components/site-header";
-import { FloatingChatButton } from "@/components/floating-chat-button";
 import { useEffect } from "react";
 import { useHelperContext } from "@/components/providers/helper-provider";
 
@@ -35,7 +34,6 @@ export default function AccountLayout({
         <SiteHeader />
         {children}
       </SidebarInset>
-      <FloatingChatButton />
     </SidebarProvider>
   );
 }
