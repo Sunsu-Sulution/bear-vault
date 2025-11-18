@@ -26,6 +26,7 @@ import { useHelperContext } from "./providers/helper-provider";
 import { useParams, useRouter } from "next/navigation";
 import { ActiveViewers } from "@/components/active-viewers";
 import { ChangeHistoryDialog } from "@/components/change-history-dialog";
+import { PermissionsDialog } from "@/components/permissions-dialog";
 import { useDashboardTabs } from "@/hooks/use-dashboard-tabs";
 import { useNotes } from "@/hooks/use-notes";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -40,6 +41,7 @@ export function SiteHeader() {
     userInfo,
     notesVisible,
     setNotesVisible,
+    permissions,
   } = useHelperContext()();
   const params = useParams<{ tab?: string }>();
   const router = useRouter();
@@ -354,18 +356,21 @@ export function SiteHeader() {
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setIsLocked(!isLocked)}
-              title={isLocked ? "คลิกเพื่อแก้ไข" : "คลิกเพื่อล็อก"}
-            >
-              {isLocked ? (
-                <Lock className="h-4 w-4" />
-              ) : (
-                <Unlock className="h-4 w-4" />
-              )}
-            </Button>
+            {permissions?.canEdit && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsLocked(!isLocked)}
+                title={isLocked ? "คลิกเพื่อแก้ไข" : "คลิกเพื่อล็อก"}
+              >
+                {isLocked ? (
+                  <Lock className="h-4 w-4" />
+                ) : (
+                  <Unlock className="h-4 w-4" />
+                )}
+              </Button>
+            )}
+            <PermissionsDialog />
             <Button
               variant="default"
               size={isMobile ? "icon" : "sm"}

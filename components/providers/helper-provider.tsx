@@ -16,6 +16,7 @@ import { useAlertContext } from "./alert-provider";
 import { useFullLoadingContext } from "./full-loading-provider";
 import { getItem } from "@/lib/storage";
 import { GetUserInfoResponse } from "@/types/lask";
+import { UserRole, PermissionCheckResult } from "@/types/permission";
 
 interface HeaderContextType {
   title: string;
@@ -34,6 +35,9 @@ interface HelperContextType {
   setIsLocked: Dispatch<SetStateAction<boolean>>;
   notesVisible: boolean;
   setNotesVisible: Dispatch<SetStateAction<boolean>>;
+  userRole: UserRole | null;
+  permissions: PermissionCheckResult | null;
+  refreshPermissions: () => Promise<void>;
 }
 
 const HelperContext = createContext<() => HelperContextType>(() => {
@@ -72,6 +76,9 @@ const HelperContext = createContext<() => HelperContextType>(() => {
     setIsLocked: () => {},
     notesVisible: true,
     setNotesVisible: () => {},
+    userRole: null,
+    permissions: null,
+    refreshPermissions: async () => {},
   };
 });
 
@@ -106,6 +113,44 @@ export function HelperProvider({ children }: { children: ReactNode }) {
     },
   );
 
+  const [userRole, setUserRole] = useState<UserRole | null>(null);
+  const [permissions, setPermissions] = useState<PermissionCheckResult | null>(null);
+
+  // Fetch user permissions
+  const refreshPermissions = useCallback(async () => {
+    if (!userInfo?.email) {
+      setUserRole(null);
+      setPermissions(null);
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `/api/user-configs/user-permission?email=${encodeURIComponent(userInfo.email)}`
+      );
+      if (response.ok) {
+        const data = await response.json();
+        setUserRole(data.role);
+        setPermissions(data.permissions);
+      }
+    } catch (error) {
+      console.error("Error fetching permissions:", error);
+      // On error, assume no permission (safer approach)
+      setUserRole(null);
+      setPermissions({
+        canView: false,
+        canEdit: false,
+        canManagePermissions: false,
+        isSuperAdmin: false,
+      });
+    }
+  }, [userInfo?.email]);
+
+  // Fetch permissions when user info changes
+  useEffect(() => {
+    refreshPermissions();
+  }, [refreshPermissions]);
+
   useEffect(() => {
     // Don't redirect if user is viewing a public page
     if (!userInfo && !pathname?.startsWith("/public")) {
@@ -136,8 +181,11 @@ export function HelperProvider({ children }: { children: ReactNode }) {
       setIsLocked,
       notesVisible,
       setNotesVisible,
+      userRole,
+      permissions,
+      refreshPermissions,
     }),
-    [setAlert, setFullLoading, router, userInfo, title, isLocked, notesVisible],
+    [setAlert, setFullLoading, router, userInfo, title, isLocked, notesVisible, userRole, permissions, refreshPermissions],
   );
 
   return (

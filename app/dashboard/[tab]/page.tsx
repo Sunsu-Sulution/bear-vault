@@ -43,7 +43,19 @@ export default function Page() {
   const tab = tabs.find((t) => t.id === tabId);
   const tabName = tab?.name || tabId;
   const isMobile = useIsMobile();
-  const { isLocked, userInfo, notesVisible } = useHelperContext()();
+  const { isLocked, userInfo, notesVisible, permissions, router } = useHelperContext()();
+
+  // Check permissions and redirect if no access
+  React.useEffect(() => {
+    if (permissions !== null && !permissions.canView) {
+      router.push("/dashboard/no-permission");
+    }
+  }, [permissions, router]);
+
+  // Don't render if no permission
+  if (permissions !== null && !permissions.canView) {
+    return null;
+  }
   const {
     configs,
     addChart,
@@ -748,7 +760,7 @@ export default function Page() {
       )}
       <div className="flex items-center justify-between">
         <div className="text-2xl font-bold break-all">{tabName}</div>
-        {!isLocked && (
+        {!isLocked && permissions?.canEdit && (
           <div className="flex gap-2">
             <Button onClick={handleAddChart}>
               <Plus className="h-4 w-4 mr-2" /> เพิ่มกราฟ
@@ -785,7 +797,7 @@ export default function Page() {
       {configs.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 border-2 border-dashed rounded-lg">
           <p className="text-muted-foreground mb-4">ยังไม่มีกราฟในหน้านี้</p>
-          {!isLocked && (
+          {!isLocked && permissions?.canEdit && (
             <Button onClick={handleAddChart} variant="outline">
               <Plus className="h-4 w-4 mr-2" /> เพิ่มกราฟแรก
             </Button>
@@ -935,7 +947,7 @@ export default function Page() {
                   previewWidth={previewWidths[config.id]}
                   isResizing={isResizing === config.id}
                   onEdit={
-                    isLocked
+                    isLocked || !permissions?.canEdit
                       ? undefined
                       : (c) => {
                           setEditingConfig(c);
@@ -968,8 +980,8 @@ export default function Page() {
                           }
                         }
                   }
-                  onDuplicate={isLocked ? undefined : handleDuplicateChart}
-                  onDelete={isLocked ? undefined : removeChart}
+                  onDuplicate={isLocked || !permissions?.canEdit ? undefined : handleDuplicateChart}
+                  onDelete={isLocked || !permissions?.canEdit ? undefined : removeChart}
                   onDragStart={isLocked ? undefined : (id) => setDraggedId(id)}
                   onDragEnd={isLocked ? undefined : () => setDraggedId(null)}
                   isDragging={draggedId === config.id}

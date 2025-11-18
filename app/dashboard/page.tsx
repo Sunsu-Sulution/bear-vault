@@ -9,9 +9,21 @@ import { useHelperContext } from "@/components/providers/helper-provider";
 export default function Page() {
   const router = useRouter();
   const { tabs, isLoaded } = useDashboardTabs();
-  const { setFullLoading } = useHelperContext()();
+  const { setFullLoading, permissions } = useHelperContext()();
 
   useEffect(() => {
+    // Check permissions first
+    if (permissions !== null && !permissions.canView) {
+      router.push("/dashboard/no-permission");
+      return;
+    }
+
+    // Wait for permissions to load
+    if (permissions === null) {
+      setFullLoading(true);
+      return;
+    }
+
     setFullLoading(true);
     if (!isLoaded) return;
 
@@ -22,7 +34,12 @@ export default function Page() {
       setFullLoading(false);
       router.push("/dashboard/db-connection");
     }
-  }, [tabs, isLoaded, router]);
+  }, [tabs, isLoaded, router, permissions, setFullLoading]);
+
+  // Don't render if no permission
+  if (permissions !== null && !permissions.canView) {
+    return null;
+  }
 
   return <div></div>;
 }

@@ -3,7 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useConnections, type DbType } from "@/hooks/use-connections";
 import { Database, RefreshCw, CheckCircle2 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useHelperContext } from "@/components/providers/helper-provider";
+import { useRouter } from "next/navigation";
 
 type TablesResponse = {
   databases?: string[];
@@ -18,10 +20,23 @@ export default function Page() {
     updateConnection,
     removeConnection,
   } = useConnections();
+  const { permissions, router } = useHelperContext()();
   const [isFetching, setIsFetching] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<
     Record<string, { success: boolean; message?: string }>
   >({});
+
+  // Check permissions and redirect if no access
+  useEffect(() => {
+    if (permissions !== null && !permissions.canView) {
+      router.push("/dashboard/no-permission");
+    }
+  }, [permissions, router]);
+
+  // Don't render if no permission
+  if (permissions !== null && !permissions.canView) {
+    return null;
+  }
 
   const testConnection = async (
     conn: ReturnType<typeof useConnections>["connections"][0],
