@@ -120,7 +120,7 @@ export function ChartRenderer({
     unknown
   > | null>(null);
   const cardRef = React.useRef<HTMLDivElement>(null);
-  const gridRef = React.useRef<AgGridReact>(null);
+  const gridRef = React.useRef<AgGridReact<Record<string, unknown>> | null>(null);
 
   // Handle copy link
   const handleCopyLink = React.useCallback(() => {
@@ -998,18 +998,37 @@ export function ChartRenderer({
     "var(--chart-5)",
   ];
 
+  const getTableFilteredRows = React.useCallback(() => {
+    if (config.type !== "table") return null;
+    const api = gridRef.current?.api;
+    if (!api) return null;
+    const filteredRows: Record<string, unknown>[] = [];
+    api.forEachNodeAfterFilterAndSort((node) => {
+      if (node.data) {
+        filteredRows.push(node.data as Record<string, unknown>);
+      }
+    });
+    return filteredRows;
+  }, [config.type]);
+
+  const getRowsForExport = React.useCallback(async () => {
+    const tableRows = getTableFilteredRows();
+    if (tableRows !== null) {
+      return tableRows;
+    }
+    if (onFetchAllData) {
+      const allRows = await onFetchAllData();
+      return allRows ?? [];
+    }
+    return filteredData;
+  }, [filteredData, getTableFilteredRows, onFetchAllData]);
+
   // Export functions
   const handleExportExcel = async () => {
     try {
       const XLSX = await import("xlsx");
 
-      // If onFetchAllData is provided, fetch all data without limit
-      let allData: Record<string, unknown>[];
-      if (onFetchAllData) {
-        allData = await onFetchAllData();
-      } else {
-        allData = filteredData;
-      }
+      const allData = await getRowsForExport();
 
       if (!allData || allData.length === 0) return;
 
@@ -1069,13 +1088,7 @@ export function ChartRenderer({
       const jsPDF = (await import("jspdf")).default;
       const autoTable = (await import("jspdf-autotable")).default;
 
-      // If onFetchAllData is provided, fetch all data without limit
-      let allData: Record<string, unknown>[];
-      if (onFetchAllData) {
-        allData = await onFetchAllData();
-      } else {
-        allData = filteredData;
-      }
+      const allData = await getRowsForExport();
 
       if (!allData || allData.length === 0) return;
 
