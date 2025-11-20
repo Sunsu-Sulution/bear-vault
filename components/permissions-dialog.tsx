@@ -9,6 +9,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { SidebarMenuButton } from "@/components/ui/sidebar";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -162,10 +163,10 @@ export function PermissionsDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <div className="flex items-center gap-2 w-full cursor-pointer">
+        <SidebarMenuButton className="w-full">
           <IconSettings className="h-4 w-4 shrink-0" />
           <span className="truncate">จัดการสิทธิ์ผู้ใช้</span>
-        </div>
+        </SidebarMenuButton>
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[80vh]">
         <DialogHeader>
